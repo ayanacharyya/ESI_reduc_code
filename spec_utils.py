@@ -9,6 +9,7 @@ import readspec  as r
 import warnings
 warnings.filterwarnings("ignore")
 import pandas as pd
+from PyAstronomy import pyasl as p
 #----------------------------------------------------------------
 def locate(array,value):
     idx = (np.abs(array-value)).argmin()
@@ -23,71 +24,11 @@ def cleanspec_old(sp, thresh_hi=7e-17, thresh_lo=-4e-17):
     sp.badmask.loc[sp['fnu'].lt(thresh_lo)] = True
     return 0
 #----------------------------------------------------------------
-def diagnose(k, n):
-    global p, pause, inspect
-    p.remove()
-    p= plt.axvline(spec['restwave'].values[k+n], c='r')
-    print 'checking restwave['+str(k+n)+'] =', spec['restwave'].values[k+n], 'out of', spec['restwave'].values[-1]
-    if inspect:
-        plt.pause(pause)
-#----------------------------------------------------------------
 def domask(spec, jj, check=False):
     spec.badmask.loc[spec.index[jj]] = True
     if check: 
         print 'bad'
         plt.axvline(spec['restwave'].values[jj], c='k')
-#----------------------------------------------------------------
-def rec(spec, thresh, k, n, nlim):
-    global p,c,check,protected
-    c += 1
-    if check: diagnose(k,n)
-    if n == nlim:
-        if np.abs(spec['fnu'].values[k+n]) > thresh:
-            return 0
-        else:
-            return 1            
-    else:
-        if np.abs(spec['fnu'].values[k+n]) > thresh:
-            if check: print 'still suspect'
-            if rec(spec, thresh, k, n+1, nlim):
-                domask(spec, k+n, check=check)
-                return 1
-            else:
-                if check: print 'innocent'
-                protected = 1
-                return 0 
-        else:
-            return 1
-#----------------------------------------------------------------
-def cleanspec(spec, thresh=7., sig_thresh=5., npix=2):
-    global p, c, check, protected
-    print 'Cleaning spectrum carefully. This might take a few minutes..'
-    fm = np.median(spec['fnu'].values)
-    em = np.median(spec['fnu_u'].values)
-    ind,j, protected = [0]*3
-    while j in range(len(spec)-npix):
-        c = 0
-        if check: diagnose(j,0)
-        if spec['fnu_u'].values[j] > sig_thresh*em: #checking if error is too much then get rid of it
-            domask(spec, j, check=check)
-        if not protected:
-            if np.abs(spec['fnu'].values[j]) > sig_thresh*fm: #checking if too high fnu spanning <npix pixels then get rid of it
-                if check: print 'suspect'
-                if rec(spec, sig_thresh*fm, j, 1, npix):
-                    domask(spec, j, check=check)
-        elif np.abs(spec['fnu'].values[j]) <= sig_thresh*fm:
-            protected = 0        
-        j += c+1
-    
-    dummy = spec['fnu'].values[ind]
-    for j in range(0,len(spec)):
-        if check: diagnose(j,0)
-        if np.abs(spec['fnu'].values[j]-dummy) > thresh*fm*(j - ind):#checking if slope of rise (sharpness) is beyond certain thresh, then get rid of it
-            domask(spec, j, check=check)
-        else:
-            ind = j
-            dummy = spec['fnu'].values[ind]          
-    return 0
 #----------------------------------------------------------------
 def wt_mean(data, error):
     if len(data) != len(error):
@@ -128,7 +69,7 @@ def writespec_txt(spec, fout, z='', filename=''):
     spec.to_csv(fout, sep='\t',mode ='a', index=None)
     print 'Written dataframe to file ', fout
 #------------------------------------------------------------------
-def get_dispsol(wc_file, ap_max, show=False, col='b'):
+def get_dispsol(wc_file, ap_max, show=False, col='b', is_wave_air=False):
     lines = open(wc_file,'r').readlines()
     shift, offset, slope = 0, 0, 1 #default values in case absent in ec* file
     for i,l in enumerate(lines):
@@ -152,6 +93,8 @@ def get_dispsol(wc_file, ap_max, show=False, col='b'):
         o = ap*slope + offset
         for x in ypix:
             w.append((wc(x,o,xpow,opow,xmin,xmax,omin,omax,c)+shift)/o)
+        if is_wave_air:
+            w = p.airtovac2(w, mode='ciddor') #to convert to vacuum wavelengths if initially it is air wavelength
         if show:
             plt.plot(ypix,w, c=col)
             plt.axhline(w[-1], linestyle='dotted',c='k') #

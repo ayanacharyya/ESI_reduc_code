@@ -42,7 +42,7 @@ def ap(x,o,xmin,xmax,c):
 #---------------------------------------------------------------- 
 #y = float(sys.argv[1]) if len(sys.argv)>1 else 1484
 #print 'For y=',y,', x=',ap(y,o,xmin,xmax,c)
-plt.imshow(np.log10(s),cmap='gray',aspect='auto',vmin= .5, vmax=2.)
+plt.imshow(np.log10(s),cmap='gray',aspect='auto',vmin= 0.8, vmax=2.)
 for i in range(count):
     y = np.linspace(ymin[i],ymax[i],1000)
     aleft,aright=[],[]

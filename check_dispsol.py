@@ -25,12 +25,17 @@ def approx_wave_esi(order, Yval) :
     wave = coeff[0] + coeff[1]*(Yval-2048) + coeff[2]*(Yval-2048)**2 + coeff[3]*(Yval-2048)**3
     return(wave)
 #------------------------------------------------------------------------------------
-ap_max, z, restwave, ymark = 8, 1.3294, 3729.9, 2006
+ap_max, z = 8, 1.32952
+markings = [[2048.18,3735.15],[2004, 3729.9],[1957,4341.7],[2297, 3772.12]]
+fig = plt.figure(figsize=(8,8))
+fig.subplots_adjust(hspace=0.7, top=0.94, bottom=0.05, left=0.1, right=0.95)
+col_ar=['m','blue','steelblue','aqua','lime','darkolivegreen','goldenrod','orangered','darkred','dimgray']
+#------------------------------------------------------------------------------------
 wc_file = '/Users/acharyya/Documents/esi_2016b/2016aug27_1x1/IRAF/database/ecarcs.tr.ec'
-wlist = u.get_dispsol(wc_file, ap_max, show=True)
+wlist = u.get_dispsol(wc_file, ap_max, show=True, col='b') #ap_max=8 for Glenn's solution
 
-wc_file = '/Users/acharyya/Documents/esi_2016b/2016aug27_2x1/IRAF/database/ecArcs_sum.tr.ec'
-wlist = u.get_dispsol(wc_file, ap_max, show=True, col='r')
+wc_file = '/Users/acharyya/Documents/esi_2016b/2016aug27_2x1/IRAF/database/ecthar2.ec'
+wlist = u.get_dispsol(wc_file, ap_max+2, show=True, col='r', is_wave_air=True) #ap_max=10 for my solution
 
 ypix = np.arange(1,4096+1)
 for o in range(6,13+1):
@@ -38,6 +43,8 @@ for o in range(6,13+1):
     for y in ypix:
         w.append(approx_wave_esi(str(o), y))
     plt.plot(ypix,w,c='g')
-plt.axvline(ymark, linestyle='--', c='k')
-plt.axhline(restwave*(1+z), linestyle='--', c='k')
+
+for i in range(len(markings)):
+    p = plt.axvline(markings[i][0], linestyle='--',c=col_ar[i%len(markings)])
+    plt.axhline(markings[i][1]*(1+z), linestyle='--',c=p.get_color())
 plt.show(block=False)

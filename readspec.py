@@ -10,8 +10,27 @@ def get_fitsspec(filename):
     d = fits.open(filename)
     print d.info()
     h = d[-1].header
-    s = d[0-1].data
+    s = d[-1].data
     return s,h
+#-------------------function for saving array as fits file--------------
+def write_fits(filename, data, head):
+    hdu = fits.PrimaryHDU(data, header=head)
+    hdulist = fits.HDUList([hdu])
+    if filename[-5:] != '.fits':
+        filename += '.fits'
+    hdulist.writeto(filename, clobber=True)
+    print 'Written file', filename
+#----------------------------------------------------------------
+def mask_img(filename, hi_thresh=None, lo_thresh=None):
+    s,h = get_fitsspec(filename)
+    if hi_thresh is None and lo_thresh is None:
+        print 'mask_img ERROR: Need either hi_thresh or lo_thresh or both to mask image.'
+        return
+    if hi_thresh is not None:
+        s[s > hi_thresh] = 0
+    if lo_thresh is not None:
+        s[s < lo_thresh] = 0
+    write_fits(filename,s,h)
 #----------------------------------------------------------------
 def get_txtspec(filename, wrmin = None, wrmax = None, show=True, check = False, sig_thresh=5., clean=True):
     spec =  pd.read_table(filename, delim_whitespace=True, comment="#", header=0, dtype=np.float64)
@@ -30,17 +49,18 @@ def get_txtspec(filename, wrmin = None, wrmax = None, show=True, check = False, 
 def plot_spec(spec, fout=None, check = False, sig_thresh=5.):
     fig = plt.figure(figsize=(18,4))
     fig.subplots_adjust(hspace=0.7, top=0.94, bottom=0.1, left=0.06, right=0.98)
-    plt.plot(spec['restwave'],spec['fnu'])
-    plt.plot(spec['restwave'],spec['fnu_u'])
+    wave_axis = 'restwave'
+    plt.plot(spec[wave_axis],spec['fnu'])
+    plt.plot(spec[wave_axis],spec['fnu_u'])
     if check: 
         plt.axhline(np.median(spec['fnu'].values)*sig_thresh, linestyle='--', c='r') #
         plt.axhline(-np.median(spec['fnu'].values)*sig_thresh, linestyle='--', c='r') #
     #plt.ylim(np.min(spec['fnu']), np.max(spec['fnu']))
-    plt.ylim(-4e-17,5e-17)
+    plt.ylim(-4e-17,9e-17)
     #plt.ylim(-50,60000) #
-    plt.xlim(spec['restwave'].values[0],spec['restwave'].values[-1])
+    plt.xlim(spec[wave_axis].values[0],spec[wave_axis].values[-1])
     plt.ylabel('fnu(ergs/cm^2/s/Hz)')
-    plt.xlabel('Rest wavelength (A)')
+    plt.xlabel(wave_axis+' (A)')
     plt.title(fout)
     plt.show(block=False)
 #---------------------------------------------------------------- 
