@@ -25,26 +25,39 @@ def approx_wave_esi(order, Yval) :
     wave = coeff[0] + coeff[1]*(Yval-2048) + coeff[2]*(Yval-2048)**2 + coeff[3]*(Yval-2048)**3
     return(wave)
 #------------------------------------------------------------------------------------
-ap_max, z = 8, 1.32952
-markings = [[2048.18,3735.15],[2004, 3729.9],[1957,4341.7],[2297, 3772.12]]
-fig = plt.figure(figsize=(8,8))
-fig.subplots_adjust(hspace=0.7, top=0.94, bottom=0.05, left=0.1, right=0.95)
-col_ar=['m','blue','steelblue','aqua','lime','darkolivegreen','goldenrod','orangered','darkred','dimgray']
+show = 0
+ap_max, z = 8, 1.3326
+markings = [['CIII1906', 2, 2506.15, 1906.683],\
+['CIII1907', 2, 2535.12, 1908.734],\
+['OII3727', 9, 1987.84, 3726.032],\
+['OII3729', 9, 2005.12, 3728.815],\
+['NeIII3869', 9, 2989.79, 3868.76],\
+['H3889', 9, 3133, 3889.02],\
+] #ordered pairs of [line_label, order number(1-to-ap_max), y-pixel on 2D image, restframe wavelength] which we think should be reproduced by the dispersion solution
+if show:
+    fig = plt.figure(figsize=(8,8))
+    fig.subplots_adjust(hspace=0.7, top=0.94, bottom=0.05, left=0.1, right=0.95)
+    col_ar=['m','blue','steelblue','aqua','lime','darkolivegreen','goldenrod','orangered','darkred','dimgray']
 #------------------------------------------------------------------------------------
-wc_file = '/Users/acharyya/Documents/esi_2016b/2016aug27_1x1/IRAF/database/ecarcs.tr.ec'
-wlist = u.get_dispsol(wc_file, ap_max, show=True, col='b') #ap_max=8 for Glenn's solution
+wc_file = '/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/database/ecarcs.tr.ec'
+wlist = u.get_dispsol(wc_file, ap_max, show=show, col='b', label='Glenn') #ap_max=8 for Glenn's solution
 
-wc_file = '/Users/acharyya/Documents/esi_2016b/2016aug27_2x1/IRAF/database/ecthar2.ec'
-wlist = u.get_dispsol(wc_file, ap_max+2, show=True, col='r', is_wave_air=True) #ap_max=10 for my solution
+wc_file = '/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/database/ecthar2.ec'#'/Users/acharyya/Documents/esi_2016b/2016aug27_2x1/IRAF/database/ecthar2.ec'
+wlist = u.get_dispsol(wc_file, ap_max+2, show=show, col='r', is_wave_air=True, label='Ayan') #ap_max=10 for my solution
 
 ypix = np.arange(1,4096+1)
 for o in range(6,13+1):
     w=[]
     for y in ypix:
         w.append(approx_wave_esi(str(o), y))
-    plt.plot(ypix,w,c='g')
+    if show: plt.plot(ypix,w,c='g',label='Jane' if o==6 else '')
 
-for i in range(len(markings)):
-    p = plt.axvline(markings[i][0], linestyle='--',c=col_ar[i%len(markings)])
-    plt.axhline(markings[i][1]*(1+z), linestyle='--',c=p.get_color())
-plt.show(block=False)
+print 'line\t\tassumed z\t\ty-pix\t\ttarget lambda\t\tobtained lambda\t\tdiscrepancy\t\tdiscrepancy(%)\t\trequired z\t\trequired delta_z\t\trequired vel(km/s)'
+for (i,mark) in enumerate(markings):
+    if show: plt.scatter(mark[2], mark[3]*(1+z), lw=0,s=50,c=col_ar[i%len(markings)])
+    wget = wlist[mark[1]-1][int(np.round(mark[2]))]/(1+z)
+    z_req = wget*(1+z)/mark[3] - 1.
+    print mark[0]+'\t\t%.4F\t\t%.2F\t\t%.3F\t\t%.3F\t\t%.3F\t\t%.2F\t\t%.4F\t\t%.4F\t\t%.2F'%(z,mark[2],mark[3],wget,mark[3]-wget,(mark[3]-wget)*100./mark[3],z_req,(z_req-z),(z_req-z)*3e5/(1+z_req))
+if show:
+    plt.legend()
+    plt.show(block=False)
