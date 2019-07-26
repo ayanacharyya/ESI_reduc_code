@@ -12,12 +12,12 @@ warnings.filterwarnings("ignore")
 fig = plt.figure(figsize=(8,8))
 fig.subplots_adjust(hspace=0.7, top=0.94, bottom=0.05, left=0.1, right=0.95)
 input = sys.argv[1] if len(sys.argv)>1 else 'std1_cos_clean'
-filename = '/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/'+input+'.fits'#'/Users/acharyya/Work/astro/obs_data/esi_2017a/2017feb24/IRAF/P0440_23_cos.fits'#
+filename = '/Users/acharyya/Work/astro/obs_data/esi_2017a/2017feb24/IRAF/P0440_23_cos.fits'#'/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/'+input+'.fits'#
 s,h = u.get_fitsspec(filename)
-binx, biny = 1,1
+binx, biny = 2,2
 #----------------------------------------------------------------        
 count = 0
-ap_file = '/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/database/ap'+input#'/Users/acharyya/Work/astro/obs_data/esi_2017a/2017feb24/IRAF/database/aplast'#
+ap_file = '/Users/acharyya/Work/astro/obs_data/esi_2017a/2017feb24/IRAF/database/aplast'# '/Users/acharyya/Work/astro/obs_data/esi_2016b/2016aug27_1x1/IRAF/database/ap'+input
 lines = open(ap_file,'r').readlines()
 o,left,right,ymin,ymax,coeff,off=[],[],[],[],[],[],[]
 for i,l in enumerate(lines):
